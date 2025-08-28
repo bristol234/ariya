@@ -53,10 +53,10 @@
 Click "Advanced" and add these environment variables:
 
 ```
-MONGODB_URI=mongodb+srv://bristolsteve8:VODagIEtSbpYh5nD@cfcu.eodznuq.mongodb.net/cfcu-banking?retryWrites=true&w=majority&appName=cfcu
-JWT_SECRET=cfcu-secret-key-2024-production-render
-SENDGRID_API_KEY=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
-SENDGRID_FROM_EMAIL=cornerstonebank@accountant.com
+MONGODB_URI=mongodb+srv://your-username:your-password@your-cluster.mongodb.net/your-database?retryWrites=true&w=majority
+JWT_SECRET=your-jwt-secret-key-here
+SENDGRID_API_KEY=your-sendgrid-api-key-here
+SENDGRID_FROM_EMAIL=your-sender-email@domain.com
 NODE_ENV=production
 PORT=10000
 CORS_ORIGIN=https://cornerstonefcu.web.app
