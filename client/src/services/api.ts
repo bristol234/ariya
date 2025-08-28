@@ -114,4 +114,20 @@ export const transactionsAPI = {
     api.get('/transactions/transfers/history', { params }),
 };
 
+// Admin API
+export const adminAPI = {
+  getUsers: () =>
+    api.get('/admin/users'),
+  createUser: (userData: any) =>
+    api.post('/admin/users', userData),
+  getWireTransfers: () =>
+    api.get('/admin/wire-transfers'),
+  getTransactions: () =>
+    api.get('/admin/transactions'),
+  getDashboardStats: () =>
+    api.get('/admin/dashboard'),
+  updateWireTransferStatus: (transactionId: string, data: { status: string; adminNotes?: string }) =>
+    api.patch(`/admin/wire-transfers/${transactionId}/status`, data),
+};
+
 export default api;

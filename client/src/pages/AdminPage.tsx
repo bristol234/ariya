@@ -2,17 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Users, 
-  CreditCard, 
-  Clock, 
   CheckCircle, 
   XCircle, 
-  AlertTriangle,
+  Clock, 
+  AlertTriangle, 
+  Pause, 
   Eye,
-  Check,
-  X,
-  Pause
+  Download,
+  Search,
+  Filter,
+  RefreshCw,
+  Users,
+  CreditCard
 } from 'lucide-react';
+import { adminAPI } from '../services/api';
 
 interface Transaction {
   _id?: string;
@@ -97,31 +100,16 @@ const AdminPage: React.FC = () => {
       setLoading(true);
       
       // Fetch wire transfers (pending for approval)
-      const wireTransfersResponse = await fetch('http://localhost:5001/api/admin/wire-transfers', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      const wireTransfersData = await wireTransfersResponse.json();
-      setPendingTransactions(wireTransfersData.wires || []);
+      const wireTransfersResponse = await adminAPI.getWireTransfers();
+      setPendingTransactions(wireTransfersResponse.data.wires || []);
 
       // Fetch all transactions
-      const allResponse = await fetch('http://localhost:5001/api/admin/transactions', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      const allData = await allResponse.json();
-      setAllTransactions(allData.transactions || []);
+      const allResponse = await adminAPI.getTransactions();
+      setAllTransactions(allResponse.data.transactions || []);
 
       // Fetch dashboard stats
-      const statsResponse = await fetch('http://localhost:5001/api/admin/dashboard', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      const statsData = await statsResponse.json();
-      setStats(statsData);
+      const statsResponse = await adminAPI.getDashboardStats();
+      setStats(statsResponse.data);
 
     } catch (error) {
       console.error('Error fetching admin data:', error);
@@ -134,31 +122,23 @@ const AdminPage: React.FC = () => {
     try {
       setActionLoading(true);
       
-      const response = await fetch(`http://localhost:5001/api/admin/wire-transfers/${transactionId}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          status,
-          adminNotes: adminNotes || undefined
-        })
+      const response = await adminAPI.updateWireTransferStatus(transactionId, {
+        status,
+        adminNotes: adminNotes || undefined
       });
 
-      if (response.ok) {
+      if (response.status === 200) {
         // Refresh data
         await fetchAdminData();
         setSelectedTransaction(null);
         setAdminNotes('');
         alert(`Transaction status updated to ${status}`);
       } else {
-        const error = await response.json();
-        alert(`Error: ${error.error}`);
+        alert(`Error: ${response.data.error || 'Unknown error'}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating transaction:', error);
-      alert('Error updating transaction status');
+      alert(`Error updating transaction status: ${error.response?.data?.error || error.message}`);
     } finally {
       setActionLoading(false);
     }
@@ -522,7 +502,7 @@ const AdminPage: React.FC = () => {
                   disabled={actionLoading}
                   className="px-4 py-2 text-sm font-medium text-red-700 bg-red-100 border border-red-300 rounded-md hover:bg-red-200 disabled:opacity-50"
                 >
-                  <X className="w-4 h-4 inline mr-1" />
+                  <XCircle className="w-4 h-4 inline mr-1" />
                   Reject
                 </button>
                 
@@ -531,7 +511,7 @@ const AdminPage: React.FC = () => {
                   disabled={actionLoading}
                   className="px-4 py-2 text-sm font-medium text-green-700 bg-green-100 border border-green-300 rounded-md hover:bg-green-200 disabled:opacity-50"
                 >
-                  <Check className="w-4 h-4 inline mr-1" />
+                  <CheckCircle className="w-4 h-4 inline mr-1" />
                   Approve
                 </button>
               </div>
