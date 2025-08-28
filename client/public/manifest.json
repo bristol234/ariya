@@ -1,0 +1,26 @@
+{
+  "short_name": "CFCU Banking",
+  "name": "Cornerstone Financial Credit Union - Online Banking",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "Untitledlogo.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "Untitledlogo.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#002C5F",
+  "background_color": "#ffffff",
+  "description": "Secure, convenient banking services for Cornerstone Financial Credit Union members in Nashville, TN"
+} 

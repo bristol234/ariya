@@ -1,0 +1,176 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply bg-[#faf5f0] text-gray-900;
+  }
+  
+  * {
+    @apply border-gray-200;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-[#002C5F] hover:bg-[#002966] text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#002C5F] focus:ring-offset-2;
+  }
+  
+  .btn-secondary {
+    @apply bg-[#faf5f0] hover:bg-[#f9f3ed] text-gray-700 font-medium py-2 px-4 rounded-lg border border-gray-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#002C5F] focus:ring-offset-2;
+  }
+  
+  .btn-accent {
+    @apply bg-[#BE9B4C] hover:bg-[#a88a43] text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#BE9B4C] focus:ring-offset-2;
+  }
+  
+  .input-field {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#002C5F] focus:border-transparent transition-colors duration-200;
+  }
+  
+  .card {
+    @apply bg-[#faf5f0] rounded-xl shadow-soft border border-gray-100;
+  }
+  
+  .card-hover {
+    @apply bg-[#faf5f0] rounded-xl shadow-soft border border-gray-100 hover:shadow-medium transition-shadow duration-200;
+  }
+  
+  .nav-link {
+    @apply text-gray-600 hover:text-[#002C5F] font-medium transition-colors duration-200;
+  }
+  
+  .nav-link-active {
+    @apply text-[#002C5F] font-semibold;
+  }
+  
+  .sidebar-link {
+    @apply flex items-center px-4 py-3 text-gray-700 hover:bg-[#f9f3ed] hover:text-[#002C5F] rounded-lg transition-colors duration-200;
+  }
+  
+  .sidebar-link-active {
+    @apply bg-[#e6f0ff] text-[#002C5F] font-medium;
+  }
+  
+  .status-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .status-success {
+    @apply bg-green-100 text-green-800;
+  }
+  
+  .status-warning {
+    @apply bg-[#fdf8f0] text-[#BE9B4C];
+  }
+  
+  .status-error {
+    @apply bg-red-100 text-red-800;
+  }
+  
+  .status-info {
+    @apply bg-[#e6f0ff] text-[#002C5F];
+  }
+  
+  .amount-positive {
+    @apply text-green-600 font-semibold;
+  }
+  
+  .amount-negative {
+    @apply text-red-600 font-semibold;
+  }
+  
+  .amount-neutral {
+    @apply text-gray-900 font-semibold;
+  }
+  
+  .gradient-primary {
+    background: linear-gradient(135deg, #002C5F 0%, #003d99 100%);
+  }
+  
+  .gradient-accent {
+    background: linear-gradient(135deg, #BE9B4C 0%, #a88a43 100%);
+  }
+  
+  .gradient-success {
+    background: linear-gradient(135deg, #5eab88 0%, #479f77 100%);
+  }
+  
+  .text-gradient {
+    background: linear-gradient(135deg, #002C5F 0%, #003d99 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Custom animations */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+.slide-down {
+  animation: slideDown 0.3s ease-out;
+}
+
+.scale-in {
+  animation: scaleIn 0.2s ease-out;
+}
+
+/* Loading spinner */
+.spinner {
+  border: 2px solid #f3f4f6;
+  border-top: 2px solid #002C5F;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+} 
