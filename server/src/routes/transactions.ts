@@ -228,8 +228,8 @@ router.post('/wire-transfer', auth, async (req: any, res) => {
     try {
       await EmailService.sendTransactionNotification(
         user.email,
-        transaction,
-        user.username
+        user.username,
+        transaction
       );
     } catch (emailError) {
       console.error('Failed to send email notification:', emailError);
@@ -307,8 +307,8 @@ router.post('/:transactionId/cancel', auth, async (req: any, res) => {
       // Send email notification
       await EmailService.sendTransactionNotification(
         user.email,
-        transaction,
-        user.username
+        user.username,
+        transaction
       );
     }
 

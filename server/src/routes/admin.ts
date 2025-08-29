@@ -186,8 +186,8 @@ router.put('/transactions/:transactionId/status', auth, adminAuth, async (req, r
       // Send email notification
       await EmailService.sendTransactionNotification(
         user.email,
-        transaction,
-        user.username
+        user.username,
+        transaction
       );
     }
 
@@ -293,7 +293,7 @@ router.patch('/wire-transfers/:id/status', auth, adminAuth, async (req, res) => 
     const user = await User.findById(txn.userId);
     if (user) {
       try {
-        await EmailService.sendTransactionNotification(user.email, txn, user.username);
+        await EmailService.sendTransactionNotification(user.email, user.username, txn);
       } catch (emailError) {
         console.error('Failed to send email notification:', emailError);
         // Don't fail the status update if email fails
