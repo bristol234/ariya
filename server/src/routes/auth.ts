@@ -63,7 +63,7 @@ router.post('/login', async (req, res) => {
     await OTP.create({ email: user.email, code: otpCode, expiresAt, isUsed: false });
 
     try {
-      await EmailService.sendOTP(user.email, otpCode, user.username);
+      await EmailService.sendOTP(user.email, user.username, otpCode);
     } catch (emailErr) {
       // Do not block login if email fails; client can retry
       console.error('OTP email send failed:', emailErr);

@@ -1,305 +1,522 @@
-import sgMail from '@sendgrid/mail';
+import nodemailer from 'nodemailer';
 
-// Function to initialize SendGrid
-function initializeSendGrid() {
-  const apiKey = process.env.SENDGRID_API_KEY;
-  console.log('SendGrid API Key check:', apiKey ? `${apiKey.substring(0, 10)}...` : 'Not found');
-  
-  if (apiKey && apiKey.startsWith('SG.')) {
-    sgMail.setApiKey(apiKey);
-    console.log('SendGrid initialized successfully');
-    return true;
-  } else {
-    console.warn('SendGrid API key not configured properly. Email functionality will be disabled.');
-    return false;
-  }
-}
-
-// Initialize SendGrid
-const sendGridInitialized = initializeSendGrid();
-
+// Gmail email service
 export class EmailService {
+  private static transporter: nodemailer.Transporter | null = null;
+
+  private static async getTransporter(): Promise<nodemailer.Transporter> {
+    if (!this.transporter) {
+      this.transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false, // true for 465, false for other ports
+        auth: {
+          user: process.env.GMAIL_USER,
+          pass: process.env.GMAIL_APP_PASSWORD
+        },
+        tls: {
+          rejectUnauthorized: false
+        }
+      });
+    }
+    return this.transporter;
+  }
+
   static async sendOTP(email: string, username: string, otp: string): Promise<boolean> {
     try {
-      // Re-initialize SendGrid in case environment variables were loaded after import
-      if (!sendGridInitialized) {
-        const apiKey = process.env.SENDGRID_API_KEY;
-        if (apiKey && apiKey.startsWith('SG.')) {
-          sgMail.setApiKey(apiKey);
-          console.log('SendGrid re-initialized successfully');
-        } else {
-          console.error('SendGrid API key still not available');
-          console.log(`[DEV] OTP for ${email} (user: ${username}) is: ${otp}`);
-          return false;
-        }
-      }
-
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
+      const transporter = await this.getTransporter();
+      
+      const mailOptions = {
+        from: process.env.GMAIL_USER,
+        to: email,
+        subject: 'CFCU Banking - You Are Almost There!',
+        html: `
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Your Login Code - Cornerstone Bank</title>
+            <title>CFCU Banking - Verification</title>
             <style>
-                * {
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                }
+              * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+              }
+              
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                line-height: 1.6;
+                color: #333333;
+                background-color: #f8f9fa;
+                margin: 0;
+                padding: 20px;
+              }
+              
+              .email-container {
+                max-width: 600px;
+                margin: 0 auto;
+                background: #ffffff;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+              }
+              
+              .header {
+                padding: 40px 30px 30px;
+                text-align: center;
+                background: #ffffff;
+                border-bottom: 1px solid #f0f0f0;
+              }
+              
+              .logo {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 60px;
+                height: 60px;
+                background: linear-gradient(135deg, #002C5F 0%, #1e40af 100%);
+                border-radius: 12px;
+                margin-bottom: 20px;
+                font-size: 24px;
+                font-weight: 800;
+                color: #ffffff;
+                box-shadow: 0 4px 12px rgba(0, 44, 95, 0.2);
+              }
+              
+              .bank-name {
+                font-size: 28px;
+                font-weight: 700;
+                color: #002C5F;
+                margin-bottom: 8px;
+              }
+              
+              .bank-subtitle {
+                font-size: 16px;
+                color: #6b7280;
+                font-weight: 500;
+              }
+              
+              .content {
+                padding: 40px 30px;
+                background: #ffffff;
+              }
+              
+              .main-title {
+                font-size: 32px;
+                font-weight: 700;
+                color: #1f2937;
+                text-align: center;
+                margin-bottom: 20px;
+                line-height: 1.2;
+              }
+              
+              .intro-text {
+                font-size: 16px;
+                color: #6b7280;
+                text-align: center;
+                margin-bottom: 40px;
+                line-height: 1.6;
+              }
+              
+              .verification-section {
+                background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+                border: 2px solid #0ea5e9;
+                border-radius: 16px;
+                padding: 30px;
+                text-align: center;
+                margin: 30px 0;
+                position: relative;
+              }
+              
+              .verification-label {
+                font-size: 14px;
+                font-weight: 600;
+                color: #0c4a6e;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                margin-bottom: 15px;
+                opacity: 0.8;
+              }
+              
+              .verification-code {
+                font-size: 64px;
+                font-weight: 800;
+                color: #0c4a6e;
+                letter-spacing: 12px;
+                font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+                margin: 30px 0;
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                line-height: 1;
+              }
+              
+              .expiry-text {
+                font-size: 14px;
+                color: #6b7280;
+                font-weight: 500;
+                margin-top: 15px;
+              }
+              
+              .cta-section {
+                text-align: center;
+                margin: 40px 0 30px;
+              }
+              
+              .cta-text {
+                font-size: 16px;
+                font-weight: 600;
+                color: #374151;
+                margin-bottom: 20px;
+              }
+              
+              .cta-button {
+                display: inline-block;
+                background: linear-gradient(135deg, #002C5F 0%, #1e40af 100%);
+                color: #ffffff;
+                padding: 16px 32px;
+                text-decoration: none;
+                border-radius: 12px;
+                font-weight: 700;
+                font-size: 16px;
+                box-shadow: 0 8px 20px rgba(0, 44, 95, 0.25);
+                transition: all 0.3s ease;
+                border: none;
+                cursor: pointer;
+              }
+              
+              .cta-button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 12px 25px rgba(0, 44, 95, 0.35);
+              }
+              
+              .security-note {
+                background: #fef3c7;
+                border: 1px solid #f59e0b;
+                border-radius: 8px;
+                padding: 20px;
+                margin: 30px 0;
+                text-align: center;
+              }
+              
+              .security-note p {
+                color: #92400e;
+                font-size: 14px;
+                font-weight: 500;
+                margin: 0;
+              }
+              
+              .footer {
+                background: #f8f9fa;
+                padding: 30px;
+                text-align: center;
+                border-top: 1px solid #e5e7eb;
+              }
+              
+              .support-link {
+                margin-bottom: 25px;
+              }
+              
+              .support-link a {
+                color: #002C5F;
+                text-decoration: underline;
+                font-weight: 600;
+              }
+              
+              .footer-logo {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 50px;
+                height: 50px;
+                background: linear-gradient(135deg, #002C5F 0%, #1e40af 100%);
+                border-radius: 10px;
+                margin-bottom: 15px;
+                font-size: 20px;
+                font-weight: 800;
+                color: #ffffff;
+              }
+              
+              .footer-info {
+                color: #6b7280;
+                font-size: 14px;
+                line-height: 1.5;
+              }
+              
+              .footer-info p {
+                margin-bottom: 5px;
+              }
+              
+              @media (max-width: 600px) {
                 body {
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                    line-height: 1.6;
-                    color: #333;
-                    background-color: #f8fafc;
+                  padding: 10px;
                 }
-                .container {
-                    max-width: 600px;
-                    margin: 0 auto;
-                    background-color: #ffffff;
-                    border-radius: 12px;
-                    overflow: hidden;
-                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                
+                .email-container {
+                  border-radius: 8px;
                 }
+                
                 .header {
-                    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-                    color: white;
-                    padding: 30px 40px;
-                    text-align: center;
+                  padding: 30px 20px 20px;
                 }
-                .header h1 {
-                    font-size: 28px;
-                    font-weight: 600;
-                    margin-bottom: 8px;
-                }
-                .header p {
-                    font-size: 16px;
-                    opacity: 0.9;
-                }
+                
                 .content {
-                    padding: 40px;
+                  padding: 30px 20px;
                 }
-                .welcome-text {
-                    font-size: 18px;
-                    color: #374151;
-                    margin-bottom: 24px;
+                
+                .main-title {
+                  font-size: 28px;
                 }
-                .otp-container {
-                    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-                    border-radius: 12px;
-                    padding: 30px;
-                    text-align: center;
-                    margin: 30px 0;
-                    border: 2px solid #e5e7eb;
+                
+                .verification-code {
+                  font-size: 48px;
+                  letter-spacing: 8px;
+                  margin: 25px 0;
                 }
-                .otp-label {
-                    font-size: 14px;
-                    color: #6b7280;
-                    margin-bottom: 12px;
-                    text-transform: uppercase;
-                    letter-spacing: 1px;
-                    font-weight: 600;
-                }
-                .otp-code {
-                    font-size: 36px;
-                    font-weight: 700;
-                    color: #1f2937;
-                    letter-spacing: 4px;
-                    font-family: 'Courier New', monospace;
-                    background: white;
-                    padding: 20px;
-                    border-radius: 8px;
-                    border: 2px dashed #d1d5db;
-                    display: inline-block;
-                    min-width: 200px;
-                }
-                .instructions {
-                    background-color: #fef3c7;
-                    border-left: 4px solid #f59e0b;
-                    padding: 20px;
-                    margin: 24px 0;
-                    border-radius: 0 8px 8px 0;
-                }
-                .instructions h3 {
-                    color: #92400e;
-                    font-size: 16px;
-                    margin-bottom: 8px;
-                }
-                .instructions ul {
-                    color: #92400e;
-                    padding-left: 20px;
-                }
-                .instructions li {
-                    margin-bottom: 4px;
-                }
-                .footer {
-                    background-color: #f9fafb;
-                    padding: 30px 40px;
-                    text-align: center;
-                    border-top: 1px solid #e5e7eb;
-                }
-                .footer p {
-                    color: #6b7280;
-                    font-size: 14px;
-                    margin-bottom: 8px;
-                }
-                .security-note {
-                    background-color: #fef2f2;
-                    border: 1px solid #fecaca;
-                    border-radius: 8px;
-                    padding: 16px;
-                    margin-top: 24px;
-                }
-                .security-note p {
-                    color: #991b1b;
-                    font-size: 14px;
-                    text-align: center;
-                }
-                .logo {
-                    font-size: 24px;
-                    font-weight: 700;
-                    margin-bottom: 8px;
-                }
-                @media (max-width: 600px) {
-                    .container {
-                        margin: 10px;
-                        border-radius: 8px;
-                    }
-                    .header, .content, .footer {
-                        padding: 20px;
-                    }
-                    .otp-code {
-                        font-size: 28px;
-                        letter-spacing: 2px;
-                        min-width: 160px;
-                    }
-                }
+              }
             </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <div class="logo">🏦 Cornerstone Bank</div>
-                    <h1>Your Login Code</h1>
-                    <p>Secure access to your account</p>
+          </head>
+          <body>
+            <div class="email-container">
+              <div class="header">
+                <div class="logo">C</div>
+                <div class="bank-name">CFCU</div>
+                <div class="bank-subtitle">Cornerstone Financial Credit Union</div>
+              </div>
+              
+              <div class="content">
+                <h1 class="main-title">You Are Almost There!</h1>
+                
+                <p class="intro-text">
+                  Only one step left to access your CFCU Banking account. Please enter this verification code in the window where you started your login process.
+                </p>
+                
+                <div class="verification-section">
+                  <div class="verification-label">Verification Code</div>
+                  <div class="verification-code">${otp}</div>
+                  <div class="expiry-text">This code is valid for the next 10 minutes.</div>
                 </div>
                 
-                <div class="content">
-                    <p class="welcome-text">Hello <strong>${username}</strong>,</p>
-                    
-                    <p>We received a request to access your Cornerstone Bank account. To complete your login, please use the verification code below:</p>
-                    
-                    <div class="otp-container">
-                        <div class="otp-label">Verification Code</div>
-                        <div class="otp-code">${otp}</div>
-                    </div>
-                    
-                    <div class="instructions">
-                        <h3>🔐 Security Instructions:</h3>
-                        <ul>
-                            <li>This code will expire in 10 minutes</li>
-                            <li>Never share this code with anyone</li>
-                            <li>If you didn't request this code, please contact us immediately</li>
-                        </ul>
-                    </div>
-                    
-                    <p>Enter this code on the login page to access your account securely.</p>
-                    
-                    <div class="security-note">
-                        <p><strong>⚠️ Security Notice:</strong> Cornerstone Bank will never ask for this code via phone, email, or text message.</p>
-                    </div>
+                <div class="cta-section">
+                  <p class="cta-text">Or click on the button below to access your account</p>
+                  <a href="https://cornerstonefcu.web.app" class="cta-button">
+                    Access CFCU Banking
+                  </a>
                 </div>
                 
-                <div class="footer">
-                    <p><strong>Cornerstone Bank</strong></p>
-                    <p>Your trusted financial partner</p>
-                    <p style="margin-top: 16px; font-size: 12px; color: #9ca3af;">
-                        This is an automated message. Please do not reply to this email.<br>
-                        For support, contact us at support@cornerstonebank.com
-                    </p>
+                <div class="security-note">
+                  <p>🔒 Never share this code with anyone. CFCU will never ask for this code via phone or email.</p>
                 </div>
+              </div>
+              
+              <div class="footer">
+                <div class="support-link">
+                  <p>Have a question or trouble logging in? Please contact us <a href="mailto:support@cfcu.org">here</a>.</p>
+                </div>
+                
+                <div class="footer-logo">C</div>
+                
+                <div class="footer-info">
+                  <p><strong>Cornerstone Financial Credit Union</strong></p>
+                  <p>123 Banking Street, Nashville, TN 37201</p>
+                  <p>Call us - 1-800-CFCU-HELP</p>
+                </div>
+              </div>
             </div>
-        </body>
-        </html>
-      `;
-
-      const msg = {
-        to: email,
-        from: process.env.SENDGRID_FROM_EMAIL!,
-        subject: 'Your Cornerstone Bank Login Code',
-        html: htmlContent,
+          </body>
+          </html>
+        `
       };
 
-      await sgMail.send(msg);
-      console.log(`OTP email sent successfully to ${email}`);
+      await transporter.sendMail(mailOptions);
+      console.log(`✅ OTP email sent successfully to ${email}`);
       return true;
     } catch (error) {
-      console.error('Error sending OTP email:', error);
-      // Log OTP so devs can proceed during email issues
-      console.log(`[DEV] OTP for ${email} (user: ${username}) is: ${otp}`);
-      // Do not throw; return false to let caller proceed gracefully
+      console.error('❌ Error sending OTP email:', error);
+      console.log(`📧 [DEV] OTP for ${email} (user: ${username}) is: ${otp}`);
       return false;
     }
   }
 
-  static async sendTransactionNotification(email: string, transaction: any, username: string) {
-    // Check if SendGrid is properly configured
-    if (!process.env.SENDGRID_API_KEY || !process.env.SENDGRID_API_KEY.startsWith('SG.')) {
-      console.log(`Transaction notification would be sent to ${email} for transaction ${transaction.transactionId}`);
-      return true;
-    }
-
-    const msg = {
-      to: email,
-      from: process.env.SENDGRID_FROM_EMAIL!,
-      subject: `Transaction ${transaction.status} - CFCU Bank`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #002C5F 0%, #1e40af 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0; font-size: 24px;">CFCU Bank</h1>
-            <p style="color: #e5e7eb; margin: 10px 0 0 0;">Transaction Notification</p>
-          </div>
-          
-          <div style="background: white; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
-            <h2 style="color: #1f2937; margin: 0 0 20px 0;">Transaction Update</h2>
-            
-            <p style="color: #6b7280; margin: 0 0 20px 0; line-height: 1.6;">
-              Hello ${username},
-            </p>
-            
-            <p style="color: #6b7280; margin: 0 0 20px 0; line-height: 1.6;">
-              Your transaction has been updated:
-            </p>
-            
-            <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 5px 0;"><strong>Transaction ID:</strong> ${transaction.transactionId}</p>
-              <p style="margin: 5px 0;"><strong>Type:</strong> ${transaction.type}</p>
-              <p style="margin: 5px 0;"><strong>Amount:</strong> $${transaction.amount.toFixed(2)}</p>
-              <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: #059669;">${transaction.status}</span></p>
-              <p style="margin: 5px 0;"><strong>Description:</strong> ${transaction.description}</p>
-            </div>
-            
-            <p style="color: #6b7280; margin: 20px 0 0 0; font-size: 14px;">
-              Thank you for banking with CFCU Bank.
-            </p>
-          </div>
-          
-          <div style="text-align: center; margin-top: 20px;">
-            <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-              © 2024 CFCU Bank. All rights reserved.
-            </p>
-          </div>
-        </div>
-      `
-    };
-
+  static async sendWelcomeEmail(email: string, username: string, firstName: string): Promise<boolean> {
     try {
-      await sgMail.send(msg);
-      console.log(`Transaction notification sent to ${email}`);
+      const transporter = await this.getTransporter();
+      
+      const mailOptions = {
+        from: process.env.GMAIL_USER,
+        to: email,
+        subject: 'Welcome to CFCU Banking!',
+        html: `
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Welcome to CFCU</title>
+            <style>
+              body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                background-color: #f8fafc;
+                margin: 0;
+                padding: 20px;
+              }
+              .container {
+                max-width: 600px;
+                margin: 0 auto;
+                background-color: #ffffff;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+              }
+              .header {
+                background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+                color: white;
+                padding: 30px 40px;
+                text-align: center;
+              }
+              .content {
+                padding: 40px;
+              }
+              .button {
+                display: inline-block;
+                background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+                color: white;
+                padding: 12px 24px;
+                text-decoration: none;
+                border-radius: 8px;
+                font-weight: 600;
+                margin: 20px 0;
+              }
+              .footer {
+                background-color: #f8fafc;
+                padding: 20px 40px;
+                text-align: center;
+                color: #6b7280;
+                font-size: 14px;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>Welcome to CFCU Banking!</h1>
+              </div>
+              
+              <div class="content">
+                <h2>Hello ${firstName}!</h2>
+                <p>Welcome to Cornerstone Financial Credit Union! Your account has been successfully created.</p>
+                <p>You can now access your banking services with username: <strong>${username}</strong></p>
+                
+                <a href="https://cornerstonefcu.web.app" class="button">Start Banking</a>
+              </div>
+              
+              <div class="footer">
+                <p>&copy; 2024 Cornerstone Financial Credit Union. All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `
+      };
+
+      await transporter.sendMail(mailOptions);
+      console.log(`✅ Welcome email sent successfully to ${email}`);
       return true;
     } catch (error) {
-      console.error('Error sending transaction notification:', error);
-      // Don't throw error, just log it and return false
+      console.error('❌ Error sending welcome email:', error);
+      return false;
+    }
+  }
+
+  static async sendTransactionNotification(email: string, username: string, transactionDetails: any): Promise<boolean> {
+    try {
+      const transporter = await this.getTransporter();
+      
+      const mailOptions = {
+        from: process.env.GMAIL_USER,
+        to: email,
+        subject: 'CFCU - Transaction Notification',
+        html: `
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Transaction Notification</title>
+            <style>
+              body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                background-color: #f8fafc;
+                margin: 0;
+                padding: 20px;
+              }
+              .container {
+                max-width: 600px;
+                margin: 0 auto;
+                background-color: #ffffff;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+              }
+              .header {
+                background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+                color: white;
+                padding: 30px 40px;
+                text-align: center;
+              }
+              .content {
+                padding: 40px;
+              }
+              .transaction-details {
+                background: #f3f4f6;
+                border-radius: 8px;
+                padding: 20px;
+                margin: 20px 0;
+              }
+              .footer {
+                background-color: #f8fafc;
+                padding: 20px 40px;
+                text-align: center;
+                color: #6b7280;
+                font-size: 14px;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>Transaction Notification</h1>
+              </div>
+              
+              <div class="content">
+                <h2>Hello ${username},</h2>
+                <p>A transaction has been processed on your account:</p>
+                
+                <div class="transaction-details">
+                  <p><strong>Type:</strong> ${transactionDetails.type}</p>
+                  <p><strong>Amount:</strong> $${transactionDetails.amount}</p>
+                  <p><strong>Status:</strong> ${transactionDetails.status}</p>
+                  <p><strong>Date:</strong> ${new Date(transactionDetails.createdAt).toLocaleString()}</p>
+                </div>
+              </div>
+              
+              <div class="footer">
+                <p>&copy; 2024 Cornerstone Financial Credit Union. All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `
+      };
+
+      await transporter.sendMail(mailOptions);
+      console.log(`✅ Transaction notification sent successfully to ${email}`);
+      return true;
+    } catch (error) {
+      console.error('❌ Error sending transaction notification:', error);
       return false;
     }
   }
