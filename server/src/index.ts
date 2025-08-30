@@ -18,9 +18,11 @@ const PORT = process.env.PORT || 5001;
 
 // Middleware
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://cornerstonefcu.web.app', 'https://cornerstonefcu.firebaseapp.com']
-    : ['http://localhost:3000'],
+  origin: [
+    'https://cornerstonefcu.web.app', 
+    'https://cornerstonefcu.firebaseapp.com',
+    'http://localhost:3000'
+  ],
   credentials: true
 }));
 
