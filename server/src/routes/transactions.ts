@@ -221,8 +221,17 @@ router.post('/wire-transfer', auth, async (req: any, res) => {
     await transaction.save();
 
     // Deduct amount from user's account
+    const previousBalance = user.accounts[fromAccountType as keyof typeof user.accounts].balance;
     user.accounts[fromAccountType as keyof typeof user.accounts].balance -= totalAmount;
     await user.save();
+
+    console.log(`💰 Wire transfer created: ${transaction.transactionId}`);
+    console.log(`   User: ${user.username}`);
+    console.log(`   Account: ${fromAccountType}`);
+    console.log(`   Amount deducted: $${totalAmount} (Transfer: $${amount} + Fee: $${wireTransferFee})`);
+    console.log(`   Previous balance: $${previousBalance}`);
+    console.log(`   New balance: $${user.accounts[fromAccountType as keyof typeof user.accounts].balance}`);
+    console.log(`   Status: ${transaction.status}`);
 
     // Send email notification
     try {

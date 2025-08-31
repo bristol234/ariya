@@ -10,7 +10,7 @@ const demoUser = {
   email: 'demo@cfcu.org',
   firstName: 'John',
   lastName: 'Doe',
-  memberSince: '2020-01-15',
+  memberSince: '2015',
   phone: '(615) 555-0123',
   address: {
     street: '123 Main St',
@@ -105,7 +105,7 @@ router.get('/dashboard', (req: Request, res: Response) => {
       recentTransactions: 8,
       upcomingPayments: 2,
       creditScore: 750,
-      memberSince: '2020-01-15',
+      memberSince: '2015',
       lastLogin: new Date().toISOString(),
       quickActions: [
         { id: '1', name: 'Transfer Money', icon: 'send' },

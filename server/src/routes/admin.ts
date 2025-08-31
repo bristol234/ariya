@@ -258,28 +258,38 @@ router.patch('/wire-transfers/:id/status', auth, adminAuth, async (req, res) => 
       return res.status(404).json({ error: 'Transaction not found' });
     }
 
-    // If status is being changed to completed, deduct the amount from user's account
+    // Get user for balance operations
+    const user = await User.findById(txn.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Get the account type from the transaction
+    const accountType = txn.fromAccount?.type;
+    if (!accountType || !['checking', 'savings'].includes(accountType)) {
+      return res.status(400).json({ error: 'Invalid account type' });
+    }
+
+    // Handle different status changes
     if (status === 'completed' && txn.status !== 'completed') {
-      const user = await User.findById(txn.userId);
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-
-      // Get the account type from the transaction
-      const accountType = txn.fromAccount?.type;
-      if (!accountType || !['checking', 'savings'].includes(accountType)) {
-        return res.status(400).json({ error: 'Invalid account type' });
-      }
-
-      // Check if user has sufficient balance
+      // If status is being changed to completed, deduct the amount from user's account
+      // Note: For wire transfers, the amount is already deducted when created
+      // This is just a final confirmation
+      console.log(`Wire transfer ${txn.transactionId} marked as completed`);
+    } else if (status === 'failed' && txn.status !== 'failed') {
+      // If status is being changed to failed, restore the amount to user's account
+      // Wire transfers have the amount deducted when created, so we need to restore it
       const accountBalance = user.accounts[accountType as keyof typeof user.accounts].balance;
-      if (accountBalance < txn.amount) {
-        return res.status(400).json({ error: 'Insufficient funds in user account' });
-      }
-
-      // Deduct the amount from user's account
-      user.accounts[accountType as keyof typeof user.accounts].balance -= txn.amount;
+      const restoreAmount = txn.amount; // This includes the transfer amount + fees
+      
+      console.log(`Restoring $${restoreAmount} to ${accountType} account for failed wire transfer ${txn.transactionId}`);
+      console.log(`Previous balance: $${accountBalance}, New balance: $${accountBalance + restoreAmount}`);
+      
+      // Restore the amount to user's account
+      user.accounts[accountType as keyof typeof user.accounts].balance += restoreAmount;
       await user.save();
+      
+      console.log(`✅ Balance restored successfully for user ${user.username}`);
     }
 
     // Update transaction status
@@ -290,7 +300,6 @@ router.patch('/wire-transfers/:id/status', auth, adminAuth, async (req, res) => 
     await txn.save();
 
     // Notify user
-    const user = await User.findById(txn.userId);
     if (user) {
       try {
         await EmailService.sendTransactionNotification(user.email, user.username, txn);
@@ -300,7 +309,11 @@ router.patch('/wire-transfers/:id/status', auth, adminAuth, async (req, res) => 
       }
     }
 
-    res.json({ success: true, txn });
+    res.json({ 
+      success: true, 
+      txn,
+      message: status === 'failed' ? 'Wire transfer marked as failed and balance restored' : 'Wire transfer status updated successfully'
+    });
   } catch (error) {
     console.error('Update wire transfer status error:', error);
     res.status(500).json({ error: 'Internal server error' });
